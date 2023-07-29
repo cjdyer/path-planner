@@ -10,6 +10,7 @@ std::vector<position_t> BFSPathPlanner::plan_path(const std::vector<std::vector<
 {
     print_debug("Planning path from (%d,%d) to (%d,%d)", start.first, start.second, end.first, end.second);
 
+    uint16_t nodes_explored = 0;
     std::queue<GridNode> open_list;
     std::map<position_t, GridNode> all_nodes;
 
@@ -17,14 +18,14 @@ std::vector<position_t> BFSPathPlanner::plan_path(const std::vector<std::vector<
     all_nodes[start] = start_node;
     open_list.push(start_node);
 
-    print_debug("Pushed start node into open_list: position=(%d,%d), cost=%.2f", start_node.position.first, start_node.position.second, start_node.cost);
+    print_debug("Pushed start node into open_list: position=(%d,%d)", start_node.position.first, start_node.position.second);
 
     while (!open_list.empty())
     {
         GridNode current = open_list.front();
         open_list.pop();
 
-        print_debug("Popped node from open_list: position=(%d,%d), cost=%.2f", current.position.first, current.position.second, current.cost);
+        print_debug("Popped node from open_list: position=(%d,%d)", current.position.first, current.position.second);
 
         if (current.position == end)
         {
@@ -36,6 +37,8 @@ std::vector<position_t> BFSPathPlanner::plan_path(const std::vector<std::vector<
 
         for (GridNode &neighbor : neighbors)
         {
+            print_debug("Checking neighbor: position=(%d,%d)", neighbor.position.first, neighbor.position.second);
+
             auto it = all_nodes.find(neighbor.position);
             if (it == all_nodes.end())
             {
@@ -43,7 +46,14 @@ std::vector<position_t> BFSPathPlanner::plan_path(const std::vector<std::vector<
                 open_list.push(neighbor);
             }
         }
+
+        if (++nodes_explored > MAX_EXPLORED_NODES)
+        {
+            print_debug("Exceeded maximum number of nodes to explore.");
+            return std::vector<position_t>(); // no path found
+        }
     }
 
+    print_debug("No path found to end node");
     return std::vector<position_t>(); // no path found
 }
