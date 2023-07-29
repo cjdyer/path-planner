@@ -51,22 +51,26 @@ int main()
 
     std::unique_ptr<PathPlanner> planner = build_path_planner(config.planner_type);
     planner->set_debug_active(config.debug_active);
-    std::vector<position_t> path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
+    std::vector<position_t> path;
+
+    // Start processing a path
+    std::future<std::vector<position_t>> path_future;
+    path_future = planner->plan_path_async(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
 
     MouseDraggingType dragging = MouseDraggingType::NONE;
 
     bool running = true;
     while (running)
     {
+        float mouse_x, mouse_y;
+        SDL_GetMouseState(&mouse_x, &mouse_y);
+
+        mouse_x = (uint16_t)std::min(mouse_x / config.scale, (config.window_dimensions.x / config.scale) - 1.0f);
+        mouse_y = (uint16_t)std::min(mouse_y / config.scale, (config.window_dimensions.y / config.scale) - 1.0f);
+
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            float x, y;
-            SDL_GetMouseState(&x, &y);
-
-            x = (uint16_t)std::min(x / config.scale, (config.window_dimensions.x / config.scale) - 1.0f);
-            y = (uint16_t)std::min(y / config.scale, (config.window_dimensions.y / config.scale) - 1.0f);
-
             switch (event.type)
             {
             case SDL_EVENT_QUIT:
@@ -76,13 +80,13 @@ int main()
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {
                     // Check if we clicked on the start or end point
-                    if (x == config.start_point.x && y == config.start_point.y)
+                    if (mouse_x == config.start_point.x && mouse_y == config.start_point.y)
                     {
                         dragging = MouseDraggingType::START;
                         break;
                     }
 
-                    if (x == config.end_point.x && y == config.end_point.y)
+                    if (mouse_x == config.end_point.x && mouse_y == config.end_point.y)
                     {
                         dragging = MouseDraggingType::END;
                         break;
@@ -101,33 +105,33 @@ int main()
                 switch (dragging)
                 {
                 case MouseDraggingType::START:
-                    config.start_point = {x, y};
+                    config.start_point = {mouse_x, mouse_y};
                     break;
                 case MouseDraggingType::END:
-                    config.end_point = {x, y};
+                    config.end_point = {mouse_x, mouse_y};
                     break;
                 case MouseDraggingType::MAP_ADD:
                     // Check that a wall isn't being added to the start or end positions
-                    if (x == config.start_point.x && y == config.start_point.y)
+                    if (mouse_x == config.start_point.x && mouse_y == config.start_point.y)
                     {
                         break;
                     }
 
-                    if (x == config.end_point.x && y == config.end_point.y)
+                    if (mouse_x == config.end_point.x && mouse_y == config.end_point.y)
                     {
                         break;
                     }
 
-                    config.map[x][y] = true; // Draw on the map
+                    config.map[mouse_x][mouse_y] = true; // Draw on the map
                     break;
                 case MouseDraggingType::MAP_REMOVE:
-                    config.map[x][y] = false; // Remove from the map
+                    config.map[mouse_x][mouse_y] = false; // Remove from the map
                     break;
                 default:
                     break;
                 }
 
-                path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
+                path_future = planner->plan_path_async(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
                 dragging = MouseDraggingType::NONE;
                 break;
             case SDL_EVENT_MOUSE_MOTION:
@@ -140,27 +144,27 @@ int main()
                 switch (dragging)
                 {
                 case MouseDraggingType::START:
-                    config.start_point = {x, y};
+                    config.start_point = {mouse_x, mouse_y};
                     break;
                 case MouseDraggingType::END:
-                    config.end_point = {x, y};
+                    config.end_point = {mouse_x, mouse_y};
                     break;
                 case MouseDraggingType::MAP_ADD:
                     // Check that a wall isn't being added to the start or end positions
-                    if (x == config.start_point.x && y == config.start_point.y)
+                    if (mouse_x == config.start_point.x && mouse_y == config.start_point.y)
                     {
                         break;
                     }
 
-                    if (x == config.end_point.x && y == config.end_point.y)
+                    if (mouse_x == config.end_point.x && mouse_y == config.end_point.y)
                     {
                         break;
                     }
 
-                    config.map[x][y] = true; // Draw on the map
+                    config.map[mouse_x][mouse_y] = true; // Draw on the map
                     break;
                 case MouseDraggingType::MAP_REMOVE:
-                    config.map[x][y] = false; // Remove from the map
+                    config.map[mouse_x][mouse_y] = false; // Remove from the map
                     break;
                 default:
                     break;
@@ -169,7 +173,7 @@ int main()
                 // If debug is active it is too laggy to calculate the path this often
                 if (!config.debug_active)
                 {
-                    path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
+                    path_future = planner->plan_path_async(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
                 }
                 break;
             }
@@ -178,6 +182,12 @@ int main()
         if (!running)
         {
             break;
+        }
+
+        if (path_future.valid() && path_future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
+        {
+            // Path planning is done, retrieve result
+            path = path_future.get();
         }
 
         // Clear the renderer
