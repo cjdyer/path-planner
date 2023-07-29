@@ -25,7 +25,7 @@ void Config::set_file_path(const std::string &file_path)
 
     if (PLANNER_TYPE_LOOKUP.find(planner_type_string) == PLANNER_TYPE_LOOKUP.end())
     {
-        std::cout << "Invalid planner_type: " << planner_type_string << " please choose from: ASTRA or DIJKSTRA" << std::endl;
+        std::cout << "Invalid planner_type: " << planner_type_string << " please choose from: ASTRA or DIJKSTRA or BFS" << std::endl;
         throw std::runtime_error("Invalid planner_type in config");
     }
 
