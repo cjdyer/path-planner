@@ -17,6 +17,8 @@ struct Config
     uint16_t scale;
 
     std::vector<std::vector<bool>> map;
+
+    bool debug_active;
 };
 
 static Config config;

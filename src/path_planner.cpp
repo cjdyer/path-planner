@@ -1,19 +1,22 @@
 #include "path_planner.h"
-#include <queue>
 #include <cmath>
 #include <iostream>
 #include <memory>
 #include <stdarg.h>
 
-AStarPathPlanner::AStarPathPlanner()
+std::unique_ptr<PathPlanner> build_path_planner()
 {
-    char *debug_env = std::getenv("DEBUG");
-    debug = (debug_env != nullptr);
+    return std::make_unique<AStarPathPlanner>();
 }
 
-void AStarPathPlanner::print_debug(const char *format, ...) const
+void PathPlanner::set_debug_active(bool debug_active)
 {
-    if (debug)
+    m_debug_active = debug_active;
+}
+
+void PathPlanner::print_debug(const char *format, ...) const
+{
+    if (m_debug_active)
     {
         char buffer[256];
         va_list args;
@@ -24,71 +27,38 @@ void AStarPathPlanner::print_debug(const char *format, ...) const
     }
 }
 
-std::vector<position_t> AStarPathPlanner::plan_path(const std::vector<std::vector<bool>> &map, position_t start, position_t end) const
+bool PathPlanner::is_walkable(position_t position, const std::vector<std::vector<bool>> &map) const
 {
-    print_debug("Planning path from (%d,%d) to (%d,%d)", start.first, start.second, end.first, end.second);
-
-    uint16_t nodes_explored = 0;
-    std::priority_queue<GridNode> openList;
-    std::map<position_t, GridNode> allNodes;
-
-    GridNode startNode = {start, 0, heuristic(start, end), nullptr};
-    allNodes[start] = startNode;
-    openList.push(startNode);
-
-    print_debug("Pushed start node into openList: position=(%d,%d), g=%.2f, h=%.2f", startNode.position.first, startNode.position.second, startNode.g, startNode.h);
-
-    while (!openList.empty())
+    if (position.first < 0 || position.second < 0 || position.first > (map.size() - 1) || position.second > (map[0].size() - 1))
     {
-        GridNode current = openList.top();
-        openList.pop();
-
-        print_debug("Popped node from openList: position=(%d,%d), g=%.2f, h=%.2f", current.position.first, current.position.second, current.g, current.h);
-
-        if (current.position == end)
-        {
-            print_debug("Found path to end node");
-            return buildPath(allNodes[current.position]);
-        }
-
-        std::vector<GridNode> neighbors = getNeighbors(allNodes[current.position], allNodes, map, end);
-
-        for (GridNode &neighbor : neighbors)
-        {
-            print_debug("Checking neighbor: position=(%d,%d), g=%.2f, h=%.2f", neighbor.position.first, neighbor.position.second, neighbor.g, neighbor.h);
-
-            auto it = allNodes.find(neighbor.position);
-            if (it == allNodes.end() || neighbor.g < it->second.g)
-            {
-                print_debug("Updated neighbor in allNodes and pushed into openList: position=(%d,%d), g=%.2f, h=%.2f", neighbor.position.first, neighbor.position.second, neighbor.g, neighbor.h);
-                allNodes[neighbor.position] = neighbor;
-                openList.push(neighbor);
-            }
-        }
-
-        if (++nodes_explored > MAX_EXPLORED_NODES)
-        {
-            print_debug("Exceeded maximum number of nodes to explore.");
-            return std::vector<position_t>(); // no path found
-        }
+        // Position is out of map bounds - return early
+        return false;
     }
 
-    print_debug("No path found to end node");
-    return std::vector<position_t>(); // no path found
+    // If the map cell is false, it's walkable
+    return !map[position.first][position.second];
 }
 
-float AStarPathPlanner::heuristic(position_t start, position_t end) const
+std::vector<position_t> PathPlanner::build_path(GridNode &end_node) const
 {
-    int dx = abs(start.first - end.first);
-    int dy = abs(start.second - end.second);
-    int min = std::min(dx, dy);
-    int max = std::max(dx, dy);
-    return (max - min) + std::sqrt(2) * min;
+    std::vector<position_t> path;
+    GridNode *current_node = &end_node;
+    while (current_node)
+    {
+        print_debug("Added node to path: position=(%d,%d)", current_node->position.first, current_node->position.second);
+
+        path.push_back(current_node->position);
+        current_node = current_node->parent;
+    }
+
+    std::reverse(path.begin(), path.end());
+    return path;
 }
 
-std::vector<AStarPathPlanner::GridNode> AStarPathPlanner::getNeighbors(GridNode &current, std::map<position_t, GridNode> &allNodes, const std::vector<std::vector<bool>> &map, position_t end) const
+std::vector<GridNode> PathPlanner::get_neighbors(GridNode &current, std::map<position_t, GridNode> &all_nodes, const std::vector<std::vector<bool>> &map, position_t end) const
 {
-    std::vector<GridNode> neighbors;
+    std::vector<GridNode>
+        neighbors;
     for (int dx = -1; dx <= 1; ++dx)
     {
         for (int dy = -1; dy <= 1; ++dy)
@@ -96,48 +66,20 @@ std::vector<AStarPathPlanner::GridNode> AStarPathPlanner::getNeighbors(GridNode 
             if (dx == 0 && dy == 0)
                 continue; // skip current node
 
-            position_t newPosition = {current.position.first + dx, current.position.second + dy};
+            position_t new_position = {current.position.first + dx, current.position.second + dy};
 
-            if (isWalkable(newPosition, map))
+            if (is_walkable(new_position, map))
             {
 
-                float newG = current.g + std::sqrt(dx * dx + dy * dy);
-                float newH = heuristic(newPosition, end);
+                float new_cost = current.cost + std::sqrt(dx * dx + dy * dy);
+                float new_heuristic = heuristic(new_position, end);
 
-                print_debug("Found walkable neighbor: position=(%d,%d), g=%.2f, h=%.2f", newPosition.first, newPosition.second, newG, newH);
+                print_debug("Found walkable neighbor: position=(%d,%d), cost=%.2f, heuristic=%.2f", new_position.first, new_position.second, new_cost, new_heuristic);
 
-                GridNode newNode = {newPosition, newG, newH, &allNodes[current.position]};
-                neighbors.push_back(newNode);
+                GridNode new_node = {new_position, new_cost, new_heuristic, &all_nodes[current.position]};
+                neighbors.push_back(new_node);
             }
         }
     }
     return neighbors;
-}
-
-bool AStarPathPlanner::isWalkable(position_t position, const std::vector<std::vector<bool>> &map) const
-{
-    // Check if position is within the map bounds
-    if (position.first >= 0 && position.second >= 0 && position.first <= (map.size() - 1) && position.second <= (map[0].size() - 1))
-    {
-        // If the map cell is false, it's walkable
-        return !map[position.first][position.second];
-    }
-    // Position is out of map bounds
-    return false;
-}
-
-std::vector<position_t> AStarPathPlanner::buildPath(GridNode &endNode) const
-{
-    std::vector<position_t> path;
-    GridNode *currentNode = &endNode;
-    while (currentNode)
-    {
-        print_debug("Added node to path: position=(%d,%d)", currentNode->position.first, currentNode->position.second);
-
-        path.push_back(currentNode->position);
-        currentNode = currentNode->parent;
-    }
-
-    std::reverse(path.begin(), path.end());
-    return path;
 }

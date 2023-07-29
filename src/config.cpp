@@ -21,5 +21,9 @@ void Config::set_file_path(const std::string &file_path)
 
     map = std::vector<std::vector<bool>>(window_dimensions.x / scale, std::vector<bool>(window_dimensions.y / scale, false)); // initialize map with false
 
+    // Pull debug state from env-vars
+    char *debug_env = std::getenv("DEBUG");
+    debug_active = (debug_env != nullptr);
+
     //! TODO: Check if config is valid
 }
