@@ -12,6 +12,8 @@ std::unique_ptr<PathPlanner> build_path_planner(PlannerType planner_type)
         return std::make_unique<AStarPathPlanner>();
     case PlannerType::DIJKSTRA:
         return std::make_unique<DijkstraPathPlanner>();
+    case PlannerType::BFS:
+        return std::make_unique<BFSPathPlanner>();
     }
 }
 

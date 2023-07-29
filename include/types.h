@@ -1,11 +1,19 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#include <map>
+
 enum class PlannerType
 {
     ASTAR,
-    DIJKSTRA
+    DIJKSTRA,
+    BFS
 };
+
+static const std::map<std::string, PlannerType> PLANNER_TYPE_LOOKUP = {
+    {"ASTAR", PlannerType::ASTAR},
+    {"DIJKSTRA", PlannerType::DIJKSTRA},
+    {"BFS", PlannerType::BFS}};
 
 enum class MouseDraggingType
 {

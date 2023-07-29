@@ -2,10 +2,6 @@
 #include <yaml-cpp/yaml.h>
 #include <iostream>
 
-static const std::map<std::string, PlannerType> PLANNER_TYPE_LOOKUP = {
-    {"ASTAR", PlannerType::ASTAR},
-    {"DIJKSTRA", PlannerType::DIJKSTRA}};
-
 void Config::set_file_path(const std::string &file_path)
 {
     YAML::Node config_yaml = YAML::LoadFile(file_path);

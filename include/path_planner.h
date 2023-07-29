@@ -48,6 +48,11 @@ protected:
 
 std::unique_ptr<PathPlanner> build_path_planner(PlannerType planner_type);
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Path Planning Implementations
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////////
 class AStarPathPlanner : public PathPlanner
 {
 public:
@@ -64,6 +69,19 @@ public:
 
 private:
     // No heuristic used in Dijkstra
+    float heuristic(position_t start, position_t end) const override
+    {
+        return 0;
+    };
+};
+
+class BFSPathPlanner : public PathPlanner
+{
+public:
+    std::vector<position_t> plan_path(const std::vector<std::vector<bool>> &map, position_t start, position_t end) const override;
+
+private:
+    // No heuristic used in BFS
     float heuristic(position_t start, position_t end) const override
     {
         return 0;
