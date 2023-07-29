@@ -1,5 +1,6 @@
 #include "config.h"
 #include <yaml-cpp/yaml.h>
+#include <iostream>
 
 void Config::set_file_path(const std::string &file_path)
 {
@@ -16,24 +17,9 @@ void Config::set_file_path(const std::string &file_path)
     end_point.x = end_point_conf[0];
     end_point.y = end_point_conf[1];
 
-    map = std::vector<std::vector<bool>>(window_dimensions.y, std::vector<bool>(window_dimensions.x, false)); // initialize map with false
+    scale = config_yaml["scale"].as<uint16_t>();
 
-    for (const auto &segment : config_yaml["wall_segments"])
-    {
-        std::vector<uint16_t> segment_coords = segment.as<std::vector<uint16_t>>();
-        uint16_t startX = segment_coords[0];
-        uint16_t startY = segment_coords[1];
-        uint16_t width = segment_coords[2];
-        uint16_t height = segment_coords[3];
-
-        for (uint16_t i = 0; i < width; i++)
-        {
-            for (uint16_t j = 0; j < height; j++)
-            {
-                map[startY + j][startX + i] = true; // mark cell as wall
-            }
-        }
-    }
+    map = std::vector<std::vector<bool>>(window_dimensions.y / scale, std::vector<bool>(window_dimensions.x / scale, false)); // initialize map with false
 
     //! TODO: Check if config is valid
 }

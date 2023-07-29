@@ -14,6 +14,8 @@ struct Config
     Vec2 start_point;
     Vec2 end_point;
 
+    uint16_t scale;
+
     std::vector<std::vector<bool>> map;
 };
 

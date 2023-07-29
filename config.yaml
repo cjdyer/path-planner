@@ -1,9 +1,7 @@
-window_width: 100
-window_height: 100
+window_width: 500
+window_height: 500
 
-start_point: [1, 1]
-end_point: [49, 49]
+scale: 50
 
-wall_segments:
-  - [10, 10, 2, 2]
-  - [20, 20, 2, 2]
+start_point: [0, 0]
+end_point: [9, 9]

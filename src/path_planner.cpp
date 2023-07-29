@@ -117,7 +117,7 @@ std::vector<AStarPathPlanner::GridNode> AStarPathPlanner::getNeighbors(GridNode 
 bool AStarPathPlanner::isWalkable(position_t position, const std::vector<std::vector<bool>> &map) const
 {
     // Check if position is within the map bounds
-    if (position.first >= 0 && position.second >= 0 && position.first < map.size() && position.second < map[0].size())
+    if (position.first >= 0 && position.second >= 0 && position.first <= (map[0].size() - 1) && position.second <= (map.size() - 1))
     {
         // If the map cell is false, it's walkable
         return !map[position.first][position.second];

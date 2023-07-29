@@ -51,7 +51,7 @@ int main()
 
     std::unique_ptr<PathPlanner> planner = std::make_unique<AStarPathPlanner>();
     std::vector<position_t> path = planner->plan_path(config.map, {config.start_point.x, config.start_point.y}, {config.end_point.x, config.end_point.y});
-    bool path_changed = true;
+    bool mouse_down = false;
 
     bool running = true;
     while (running)
@@ -59,9 +59,27 @@ int main()
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_EVENT_QUIT)
+            switch (event.type)
             {
+            case SDL_EVENT_QUIT:
                 running = false;
+                break;
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                mouse_down = true;
+                break;
+            case SDL_EVENT_MOUSE_BUTTON_UP:
+                mouse_down = false;
+                break;
+            case SDL_EVENT_MOUSE_MOTION:
+                if (!mouse_down)
+                {
+                    break;
+                }
+
+                float x, y;
+                SDL_GetMouseState(&x, &y);
+                config.map[x / config.scale][y / config.scale] = true; // Set the point in the map to be true when mouse is down and moving
+                path = planner->plan_path(config.map, {config.start_point.x, config.start_point.y}, {config.end_point.x, config.end_point.y});
                 break;
             }
         }
@@ -71,51 +89,48 @@ int main()
             break;
         }
 
-        if (path_changed)
+        // Clear the renderer
+        SDL_SetRenderDrawColor(renderer.get(), 0, 0, 0, 255);
+        SDL_RenderClear(renderer.get());
+
+        // Draw path
+        SDL_SetRenderDrawColor(renderer.get(), 255, 255, 255, 255);
+        for (const auto &point : path)
         {
-            // Clear the renderer
-            SDL_SetRenderDrawColor(renderer.get(), 0, 0, 0, 255);
-            SDL_RenderClear(renderer.get());
+            SDL_FRect cell = {point.first * config.scale, point.second * config.scale, config.scale, config.scale};
+            SDL_RenderFillRect(renderer.get(), &cell);
+        }
 
-            // Draw map
-            SDL_SetRenderDrawColor(renderer.get(), 255, 0, 0, 255);
+        // Draw map
+        SDL_SetRenderDrawColor(renderer.get(), 255, 0, 0, 255);
 
-            uint16_t x = 0, y = 0;
+        uint16_t x = 0, y = 0;
 
-            for (const auto &row : config.map)
+        for (const auto &row : config.map)
+        {
+            for (const auto &point : row)
             {
-                for (const auto &point : row)
+                if (point)
                 {
-                    if (point)
-                    {
-                        SDL_RenderPoint(renderer.get(), x, y);
-                    }
-                    x++;
+                    SDL_FRect cell = {x * config.scale, y * config.scale, config.scale, config.scale};
+                    SDL_RenderFillRect(renderer.get(), &cell);
                 }
-                x = 0;
                 y++;
             }
-
-            // Draw path
-            SDL_SetRenderDrawColor(renderer.get(), 255, 255, 255, 255);
-            for (const auto &point : path)
-            {
-                SDL_RenderPoint(renderer.get(), point.first, point.second);
-            }
-
-            // Draw the start and end points
-            SDL_SetRenderDrawColor(renderer.get(), 0, 255, 0, 255);
-            SDL_FRect start_rect = {config.start_point.x - 2, config.start_point.y - 2, 4, 4};
-            SDL_RenderFillRect(renderer.get(), &start_rect);
-
-            SDL_SetRenderDrawColor(renderer.get(), 0, 0, 255, 255);
-            SDL_FRect end_rect = {config.end_point.x - 2, config.end_point.y - 2, 4, 4};
-            SDL_RenderFillRect(renderer.get(), &end_rect);
-
-            SDL_RenderPresent(renderer.get());
-
-            path_changed = false;
+            y = 0;
+            x++;
         }
+
+        // Draw the start and end points
+        SDL_SetRenderDrawColor(renderer.get(), 0, 255, 0, 255);
+        SDL_FRect start_rect = {config.start_point.x * config.scale, config.start_point.y * config.scale, config.scale, config.scale};
+        SDL_RenderFillRect(renderer.get(), &start_rect);
+
+        SDL_SetRenderDrawColor(renderer.get(), 0, 0, 255, 255);
+        SDL_FRect end_rect = {config.end_point.x * config.scale, config.end_point.y * config.scale, config.scale, config.scale};
+        SDL_RenderFillRect(renderer.get(), &end_rect);
+
+        SDL_RenderPresent(renderer.get());
     }
 
     SDL_Quit();
