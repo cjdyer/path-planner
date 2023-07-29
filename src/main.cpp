@@ -53,16 +53,7 @@ int main()
     planner->set_debug_active(config.debug_active);
     std::vector<position_t> path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
 
-    enum class Dragging
-    {
-        NONE,
-        START,
-        END,
-        MAP_ADD,
-        MAP_REMOVE
-    };
-
-    Dragging dragging = Dragging::NONE;
+    MouseDraggingType dragging = MouseDraggingType::NONE;
 
     bool running = true;
     while (running)
@@ -87,35 +78,35 @@ int main()
                     // Check if we clicked on the start or end point
                     if (x == config.start_point.x && y == config.start_point.y)
                     {
-                        dragging = Dragging::START;
+                        dragging = MouseDraggingType::START;
                         break;
                     }
 
                     if (x == config.end_point.x && y == config.end_point.y)
                     {
-                        dragging = Dragging::END;
+                        dragging = MouseDraggingType::END;
                         break;
                     }
 
-                    dragging = Dragging::MAP_ADD;
+                    dragging = MouseDraggingType::MAP_ADD;
                 }
 
                 if (event.button.button == SDL_BUTTON_RIGHT)
                 {
-                    dragging = Dragging::MAP_REMOVE;
+                    dragging = MouseDraggingType::MAP_REMOVE;
                 }
 
                 break;
             case SDL_EVENT_MOUSE_BUTTON_UP:
                 switch (dragging)
                 {
-                case Dragging::START:
+                case MouseDraggingType::START:
                     config.start_point = {x, y};
                     break;
-                case Dragging::END:
+                case MouseDraggingType::END:
                     config.end_point = {x, y};
                     break;
-                case Dragging::MAP_ADD:
+                case MouseDraggingType::MAP_ADD:
                     // Check that a wall isn't being added to the start or end positions
                     if (x == config.start_point.x && y == config.start_point.y)
                     {
@@ -129,7 +120,7 @@ int main()
 
                     config.map[x][y] = true; // Draw on the map
                     break;
-                case Dragging::MAP_REMOVE:
+                case MouseDraggingType::MAP_REMOVE:
                     config.map[x][y] = false; // Remove from the map
                     break;
                 default:
@@ -137,24 +128,24 @@ int main()
                 }
 
                 path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
-                dragging = Dragging::NONE;
+                dragging = MouseDraggingType::NONE;
                 break;
             case SDL_EVENT_MOUSE_MOTION:
                 // Return early, no changes made
-                if (dragging == Dragging::NONE)
+                if (dragging == MouseDraggingType::NONE)
                 {
                     break;
                 }
 
                 switch (dragging)
                 {
-                case Dragging::START:
+                case MouseDraggingType::START:
                     config.start_point = {x, y};
                     break;
-                case Dragging::END:
+                case MouseDraggingType::END:
                     config.end_point = {x, y};
                     break;
-                case Dragging::MAP_ADD:
+                case MouseDraggingType::MAP_ADD:
                     // Check that a wall isn't being added to the start or end positions
                     if (x == config.start_point.x && y == config.start_point.y)
                     {
@@ -168,7 +159,7 @@ int main()
 
                     config.map[x][y] = true; // Draw on the map
                     break;
-                case Dragging::MAP_REMOVE:
+                case MouseDraggingType::MAP_REMOVE:
                     config.map[x][y] = false; // Remove from the map
                     break;
                 default:

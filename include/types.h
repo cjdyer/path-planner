@@ -7,6 +7,15 @@ enum class PlannerType
     DIJKSTRA
 };
 
+enum class MouseDraggingType
+{
+    NONE,
+    START,
+    END,
+    MAP_ADD,
+    MAP_REMOVE
+};
+
 struct Vec2
 {
     float x, y;
