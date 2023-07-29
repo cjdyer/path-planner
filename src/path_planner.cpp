@@ -39,14 +39,18 @@ void PathPlanner::print_debug(const char *format, ...) const
     std::cout << buffer << std::endl;
 }
 
-bool PathPlanner::is_walkable(position_t position, const std::vector<std::vector<bool>> &map) const
+std::vector<position_t> PathPlanner::build_path(GridNode &end_node) const
 {
-    if (position.first < 0 || position.second < 0 || position.first > (map.size() - 1) || position.second > (map[0].size() - 1))
+    std::vector<position_t> path;
+    GridNode *current_node = &end_node;
+    while (current_node)
     {
-        // Position is out of map bounds - return early
-        return false;
+        print_debug("Added node to path: position=(%d,%d)", current_node->position.first, current_node->position.second);
+
+        path.push_back(current_node->position);
+        current_node = current_node->parent;
     }
 
-    // If the map cell is false, it's walkable
-    return !map[position.first][position.second];
+    std::reverse(path.begin(), path.end());
+    return path;
 }

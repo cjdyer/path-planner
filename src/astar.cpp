@@ -8,10 +8,10 @@ std::vector<position_t> AStarPathPlanner::plan_path(const std::vector<std::vecto
     print_debug("Planning path from (%d,%d) to (%d,%d)", start.first, start.second, end.first, end.second);
 
     uint16_t nodes_explored = 0;
-    std::queue<AStarGridNode> open_list;
-    std::map<position_t, AStarGridNode> all_nodes;
+    std::queue<GridNode> open_list;
+    std::map<position_t, GridNode> all_nodes;
 
-    AStarGridNode start_node = {start, 0.0f, heuristic(start, end), nullptr};
+    GridNode start_node = {start, 0.0f, heuristic(start, end), nullptr};
     all_nodes[start] = start_node;
     open_list.push(start_node);
 
@@ -19,7 +19,7 @@ std::vector<position_t> AStarPathPlanner::plan_path(const std::vector<std::vecto
 
     while (!open_list.empty())
     {
-        AStarGridNode current = open_list.front();
+        GridNode current = open_list.front();
         open_list.pop();
 
         print_debug("Popped node from open_list: position=(%d,%d), cost=%.2f, heuristic=%.2f", current.position.first, current.position.second, current.cost, current.heuristic);
@@ -30,9 +30,9 @@ std::vector<position_t> AStarPathPlanner::plan_path(const std::vector<std::vecto
             return build_path(all_nodes[current.position]);
         }
 
-        std::vector<AStarGridNode> neighbors = get_neighbors(current, all_nodes, map, end);
+        std::vector<GridNode> neighbors = get_neighbors(current, all_nodes, map, end);
 
-        for (AStarGridNode &neighbor : neighbors)
+        for (GridNode &neighbor : neighbors)
         {
             print_debug("Checking neighbor: position=(%d,%d), cost=%.2f, heuristic=%.2f", neighbor.position.first, neighbor.position.second, neighbor.cost, neighbor.heuristic);
 
@@ -56,9 +56,9 @@ std::vector<position_t> AStarPathPlanner::plan_path(const std::vector<std::vecto
     return std::vector<position_t>(); // no path found
 }
 
-std::vector<AStarPathPlanner::AStarGridNode> AStarPathPlanner::get_neighbors(AStarGridNode &current, std::map<position_t, AStarGridNode> &all_nodes, const std::vector<std::vector<bool>> &map, position_t end) const
+std::vector<PathPlanner::GridNode> AStarPathPlanner::get_neighbors(GridNode &current, std::map<position_t, GridNode> &all_nodes, const std::vector<std::vector<bool>> &map, position_t end) const
 {
-    std::vector<AStarGridNode> neighbors;
+    std::vector<GridNode> neighbors;
 
     for (const position_t &direction : directions)
     {
@@ -81,7 +81,7 @@ std::vector<AStarPathPlanner::AStarGridNode> AStarPathPlanner::get_neighbors(ASt
 
         print_debug("Found walkable neighbor: position=(%d,%d) cost=%.2f heuristic=%.2f", new_position.first, new_position.second, new_cost, new_heuristic);
 
-        AStarGridNode new_node = {new_position, new_cost, new_heuristic, &all_nodes[current.position]};
+        GridNode new_node = {new_position, new_cost, new_heuristic, &all_nodes[current.position]};
         neighbors.push_back(new_node);
     }
 
@@ -95,20 +95,4 @@ float AStarPathPlanner::heuristic(position_t start, position_t end) const
     int min = std::min(dx, dy);
     int max = std::max(dx, dy);
     return (max - min) + std::sqrt(2) * min;
-}
-
-std::vector<position_t> AStarPathPlanner::build_path(AStarGridNode &end_node) const
-{
-    std::vector<position_t> path;
-    AStarGridNode *current_node = &end_node;
-    while (current_node)
-    {
-        print_debug("Added node to path: position=(%d,%d)", current_node->position.first, current_node->position.second);
-
-        path.push_back(current_node->position);
-        current_node = current_node->parent;
-    }
-
-    std::reverse(path.begin(), path.end());
-    return path;
 }
