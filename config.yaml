@@ -1,0 +1,9 @@
+window_width: 100
+window_height: 100
+
+start_point: [1, 1]
+end_point: [49, 49]
+
+wall_segments:
+  - [10, 10, 2, 2]
+  - [20, 20, 2, 2]
