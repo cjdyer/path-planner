@@ -18,6 +18,8 @@ struct Config
 
     std::vector<std::vector<bool>> map;
 
+    PlannerType planner_type;
+
     bool debug_active;
 };
 

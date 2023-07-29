@@ -4,9 +4,15 @@
 #include <memory>
 #include <stdarg.h>
 
-std::unique_ptr<PathPlanner> build_path_planner()
+std::unique_ptr<PathPlanner> build_path_planner(PlannerType planner_type)
 {
-    return std::make_unique<AStarPathPlanner>();
+    switch (planner_type)
+    {
+    case PlannerType::ASTAR:
+        return std::make_unique<AStarPathPlanner>();
+    case PlannerType::DIJKSTRA:
+        return std::make_unique<DijkstraPathPlanner>();
+    }
 }
 
 void PathPlanner::set_debug_active(bool debug_active)

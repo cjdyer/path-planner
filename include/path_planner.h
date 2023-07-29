@@ -46,7 +46,7 @@ protected:
     static constexpr uint16_t MAX_EXPLORED_NODES = 10000;
 };
 
-std::unique_ptr<PathPlanner> build_path_planner();
+std::unique_ptr<PathPlanner> build_path_planner(PlannerType planner_type);
 
 class AStarPathPlanner : public PathPlanner
 {

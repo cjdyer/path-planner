@@ -2,6 +2,10 @@
 #include <yaml-cpp/yaml.h>
 #include <iostream>
 
+static const std::map<std::string, PlannerType> PLANNER_TYPE_LOOKUP = {
+    {"ASTAR", PlannerType::ASTAR},
+    {"DIJKSTRA", PlannerType::DIJKSTRA}};
+
 void Config::set_file_path(const std::string &file_path)
 {
     YAML::Node config_yaml = YAML::LoadFile(file_path);
@@ -20,6 +24,16 @@ void Config::set_file_path(const std::string &file_path)
     scale = config_yaml["scale"].as<uint16_t>();
 
     map = std::vector<std::vector<bool>>(window_dimensions.x / scale, std::vector<bool>(window_dimensions.y / scale, false)); // initialize map with false
+
+    std::string planner_type_string = config_yaml["planner_type"].as<std::string>();
+
+    if (PLANNER_TYPE_LOOKUP.find(planner_type_string) == PLANNER_TYPE_LOOKUP.end())
+    {
+        std::cout << "Invalid planner_type: " << planner_type_string << " please choose from: ASTRA or DIJKSTRA" << std::endl;
+        throw std::runtime_error("Invalid planner_type in config");
+    }
+
+    planner_type = PLANNER_TYPE_LOOKUP.at(planner_type_string);
 
     // Pull debug state from env-vars
     char *debug_env = std::getenv("DEBUG");

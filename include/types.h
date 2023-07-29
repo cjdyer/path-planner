@@ -1,6 +1,12 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+enum class PlannerType
+{
+    ASTAR,
+    DIJKSTRA
+};
+
 struct Vec2
 {
     float x, y;

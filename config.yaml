@@ -1,6 +1,8 @@
 window_width: 1300
 window_height: 750
 
+planner_type: "DIJKSTRA" # ASTAR | DIJKSTRA
+
 scale: 50
 
 start_point: [0, 0]

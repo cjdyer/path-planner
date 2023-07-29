@@ -49,7 +49,7 @@ int main()
     std::unique_ptr<SDL_Window, void (*)(SDL_Window *)> window = setup_window(config);
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer *)> renderer = setup_renderer(window.get());
 
-    std::unique_ptr<PathPlanner> planner = build_path_planner();
+    std::unique_ptr<PathPlanner> planner = build_path_planner(config.planner_type);
     planner->set_debug_active(config.debug_active);
     std::vector<position_t> path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
 
