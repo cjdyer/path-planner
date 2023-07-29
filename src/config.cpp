@@ -19,7 +19,7 @@ void Config::set_file_path(const std::string &file_path)
 
     scale = config_yaml["scale"].as<uint16_t>();
 
-    map = std::vector<std::vector<bool>>(window_dimensions.y / scale, std::vector<bool>(window_dimensions.x / scale, false)); // initialize map with false
+    map = std::vector<std::vector<bool>>(window_dimensions.x / scale, std::vector<bool>(window_dimensions.y / scale, false)); // initialize map with false
 
     //! TODO: Check if config is valid
 }

@@ -50,8 +50,18 @@ int main()
     std::unique_ptr<SDL_Renderer, void (*)(SDL_Renderer *)> renderer = setup_renderer(window.get());
 
     std::unique_ptr<PathPlanner> planner = std::make_unique<AStarPathPlanner>();
-    std::vector<position_t> path = planner->plan_path(config.map, {config.start_point.x, config.start_point.y}, {config.end_point.x, config.end_point.y});
-    bool mouse_down = false;
+    std::vector<position_t> path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
+
+    enum class Dragging
+    {
+        NONE,
+        START,
+        END,
+        MAP_ADD,
+        MAP_REMOVE
+    };
+
+    Dragging dragging = Dragging::NONE;
 
     bool running = true;
     while (running)
@@ -59,27 +69,112 @@ int main()
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
+            float x, y;
+            SDL_GetMouseState(&x, &y);
+
+            x = (uint16_t)std::min(x / config.scale, (config.window_dimensions.x / config.scale) - 1.0f);
+            y = (uint16_t)std::min(y / config.scale, (config.window_dimensions.y / config.scale) - 1.0f);
+
             switch (event.type)
             {
             case SDL_EVENT_QUIT:
                 running = false;
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                mouse_down = true;
+                if (event.button.button == SDL_BUTTON_LEFT)
+                {
+                    // Check if we clicked on the start or end point
+                    if (x == config.start_point.x && y == config.start_point.y)
+                    {
+                        dragging = Dragging::START;
+                        break;
+                    }
+
+                    if (x == config.end_point.x && y == config.end_point.y)
+                    {
+                        dragging = Dragging::END;
+                        break;
+                    }
+
+                    dragging = Dragging::MAP_ADD;
+                }
+
+                if (event.button.button == SDL_BUTTON_RIGHT)
+                {
+                    dragging = Dragging::MAP_REMOVE;
+                }
+
                 break;
             case SDL_EVENT_MOUSE_BUTTON_UP:
-                mouse_down = false;
+                switch (dragging)
+                {
+                case Dragging::START:
+                    config.start_point = {x, y};
+                    break;
+                case Dragging::END:
+                    config.end_point = {x, y};
+                    break;
+                case Dragging::MAP_ADD:
+                    // Check that a wall isn't being added to the start or end positions
+                    if (x == config.start_point.x && y == config.start_point.y)
+                    {
+                        break;
+                    }
+
+                    if (x == config.end_point.x && y == config.end_point.y)
+                    {
+                        break;
+                    }
+
+                    config.map[x][y] = true; // Draw on the map
+                    break;
+                case Dragging::MAP_REMOVE:
+                    config.map[x][y] = false; // Remove from the map
+                    break;
+                default:
+                    break;
+                }
+
+                path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
+                dragging = Dragging::NONE;
                 break;
             case SDL_EVENT_MOUSE_MOTION:
-                if (!mouse_down)
+                // Return early, no changes made
+                if (dragging == Dragging::NONE)
                 {
                     break;
                 }
 
-                float x, y;
-                SDL_GetMouseState(&x, &y);
-                config.map[x / config.scale][y / config.scale] = true; // Set the point in the map to be true when mouse is down and moving
-                path = planner->plan_path(config.map, {config.start_point.x, config.start_point.y}, {config.end_point.x, config.end_point.y});
+                switch (dragging)
+                {
+                case Dragging::START:
+                    config.start_point = {x, y};
+                    break;
+                case Dragging::END:
+                    config.end_point = {x, y};
+                    break;
+                case Dragging::MAP_ADD:
+                    // Check that a wall isn't being added to the start or end positions
+                    if (x == config.start_point.x && y == config.start_point.y)
+                    {
+                        break;
+                    }
+
+                    if (x == config.end_point.x && y == config.end_point.y)
+                    {
+                        break;
+                    }
+
+                    config.map[x][y] = true; // Draw on the map
+                    break;
+                case Dragging::MAP_REMOVE:
+                    config.map[x][y] = false; // Remove from the map
+                    break;
+                default:
+                    break;
+                }
+
+                path = planner->plan_path(config.map, {(uint16_t)config.start_point.x, (uint16_t)config.start_point.y}, {(uint16_t)config.end_point.x, (uint16_t)config.end_point.y});
                 break;
             }
         }

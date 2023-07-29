@@ -101,7 +101,7 @@ std::vector<AStarPathPlanner::GridNode> AStarPathPlanner::getNeighbors(GridNode 
             if (isWalkable(newPosition, map))
             {
 
-                float newG = current.g + std::abs(dx) + std::abs(dy);
+                float newG = current.g + std::sqrt(dx * dx + dy * dy);
                 float newH = heuristic(newPosition, end);
 
                 print_debug("Found walkable neighbor: position=(%d,%d), g=%.2f, h=%.2f", newPosition.first, newPosition.second, newG, newH);
@@ -117,7 +117,7 @@ std::vector<AStarPathPlanner::GridNode> AStarPathPlanner::getNeighbors(GridNode 
 bool AStarPathPlanner::isWalkable(position_t position, const std::vector<std::vector<bool>> &map) const
 {
     // Check if position is within the map bounds
-    if (position.first >= 0 && position.second >= 0 && position.first <= (map[0].size() - 1) && position.second <= (map.size() - 1))
+    if (position.first >= 0 && position.second >= 0 && position.first <= (map.size() - 1) && position.second <= (map[0].size() - 1))
     {
         // If the map cell is false, it's walkable
         return !map[position.first][position.second];

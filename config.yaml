@@ -1,7 +1,7 @@
-window_width: 500
-window_height: 500
+window_width: 1300
+window_height: 750
 
 scale: 50
 
 start_point: [0, 0]
-end_point: [9, 9]
+end_point: [10, 13]
