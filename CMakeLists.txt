@@ -12,6 +12,7 @@ set(sources
     src/path_planner.cpp
     src/astar.cpp
     src/dijkstra.cpp
+    src/bfs.cpp
     )
 
 add_executable(${PROJECT_NAME}

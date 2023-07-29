@@ -1,7 +1,7 @@
 window_width: 1300
 window_height: 750
 
-planner_type: "DIJKSTRA" # ASTAR | DIJKSTRA
+planner_type: "BFS" # ASTAR | DIJKSTRA | BFS
 
 scale: 50
 
